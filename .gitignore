@@ -34,3 +34,4 @@
 build
 .nvimrc
 compile_commands.json
+.cache
