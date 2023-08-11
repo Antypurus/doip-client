@@ -30,3 +30,7 @@
 *.exe
 *.out
 *.app
+
+build
+.nvimrc
+compile_commands.json
