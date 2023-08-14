@@ -1,6 +1,5 @@
 #pragma once
 
-#include <optional>
 #include <cstddef>
 #include <cstdint>
 
@@ -13,8 +12,8 @@ enum class DOIPVersion: std::uint8_t
 
 enum class DOIPPayloadType: std::uint16_t
 {
-    Unsupported, //NOTE(Tiago): used to signal a payload type
-                 //that we currently dont support
+    Unsupported = 0xFF,  //NOTE(Tiago): used to signal a payload type
+                         //that we currently dont support
     GenericNegativeAck = 0x0000,
     RoutingActivationRequest = 0x0005,
     RoutingActivationResponse = 0x0006,
@@ -27,7 +26,7 @@ enum class DOIPPayloadType: std::uint16_t
 
 enum class DOIPNegativeAckCode: std::uint8_t
 {
-    None,
+    None = 0xFF,
     IncorrectPattern = 0x00,
     UnknownPayloadType = 0x01,
     MessageTooLarge = 0x02,
@@ -60,9 +59,27 @@ enum class DOIPActivationType: std::uint8_t
     CentralSecurity = 0xE0
 };
 
+enum class RoutingActivationResponse: std::uint8_t
+{
+    None = 0xFF,//NOTE(Tiago): used to denote errors with input data
+    Reserved = 0xFE,
+    DeniedUnknownSourceAddress = 0x00,
+    DeniedConcurrentConnectionLimit = 0x01,
+    DeniedMismatchWithConnecitonTable = 0x02,
+    DeniedExistingConnection = 0x03,
+    DeniedMissingAuthentication = 0x04,
+    DeniedRejectedConfirmation = 0x05,
+    DeniedUnsupportedActivationType = 0x06,
+    DeniedTLSRequired = 0x07,
+    SuccessfullActivation = 0x10,
+    ActivationPendingConfirmation = 0x11
+};
+
 class RoutingActivationRequestMessage: public DOIPMessage
 {
 public:
     RoutingActivationRequestMessage() = default;
     RoutingActivationRequestMessage(std::uint16_t diagnostic_address, DOIPActivationType activation_type = DOIPActivationType::Default);
+
+    static RoutingActivationResponse ParseActivationResponse(const std::uint8_t* data, std::uint32_t data_length);
 };

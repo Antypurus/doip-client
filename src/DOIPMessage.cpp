@@ -22,9 +22,16 @@
 #define DOIP_NACK_CODE_OFFSET (DOIP_HEADER_SIZE + DOIP_NACK_PAYLOAD_SIZE - 1)
 
 #define DOIP_ROUTING_ACTIVATION_REQUEST_PAYLOAD_SIZE 11
-#define DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_PAYLOAD_RELATIVE_OFFSET 0
-#define DOIP_ROUTING_ACTIVATION_REQUEST_ACTIVATION_TYPE_PAYLOAD_RELATIVE_OFFSET 2
+#define DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_RELATIVE_OFFSET 0
+#define DOIP_ROUTING_ACTIVATION_REQUEST_ACTIVATION_TYPE_RELATIVE_OFFSET 2
 #define DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_SIZE 2
+
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_PAYLOAD_SIZE 13
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_CLIENT_ADDRESS_RELATIVE_OFFSET 0
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_SERVER_ADDRESS_RELATIVE_OFFSET 2
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_ACTIVATION_RESPONSE_OFFSET 4
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_CLIENT_ADDRESS_SIZE 2
+#define DOIP_ROUTING_ACTIVATION_RESPONSE_SERVER_ADDRESS_SIZE 2
 
 DOIPMessage::DOIPMessage(std::uint32_t payload_size, DOIPPayloadType payload_type, DOIPVersion protocol_version)
 {
@@ -148,8 +155,22 @@ RoutingActivationRequestMessage::RoutingActivationRequestMessage(std::uint16_t d
 {
     const std::uint16_t network_order_diagnostic_address = htons(diagnostic_address);
 
-    memcpy(this->doip_message + DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_PAYLOAD_RELATIVE_OFFSET,
+    memcpy(this->doip_message + DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_RELATIVE_OFFSET,
             &network_order_diagnostic_address,
             DOIP_ROUTING_ACTIVATION_REQUEST_DIAGNOSTIC_ADDRESS_SIZE);
-    this->doip_message[DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_REQUEST_ACTIVATION_TYPE_PAYLOAD_RELATIVE_OFFSET] = (std::uint8_t)activation_type;
+    this->doip_message[DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_REQUEST_ACTIVATION_TYPE_RELATIVE_OFFSET] = (std::uint8_t)activation_type;
+}
+
+RoutingActivationResponse RoutingActivationRequestMessage::ParseActivationResponse(const std::uint8_t* data, std::uint32_t data_length)
+{
+    if(data_length != (DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_RESPONSE_PAYLOAD_SIZE)) return RoutingActivationResponse::None;
+
+    const std::uint8_t response = data[DOIP_HEADER_SIZE + DOIP_ROUTING_ACTIVATION_RESPONSE_ACTIVATION_RESPONSE_OFFSET];
+
+    if(response >= 0x08 && response <= 0x0F) return RoutingActivationResponse::Reserved;
+    if(response >= 0x12 && response <= 0xDF) return RoutingActivationResponse::Reserved;
+    if(response >= 0xE0 && response <= 0xFE) return RoutingActivationResponse::Reserved;
+    if(response == 0xFF) return RoutingActivationResponse::Reserved;
+
+    return (RoutingActivationResponse)response;
 }

@@ -61,10 +61,18 @@ int main()
     }
     else if(type == DOIPPayloadType::RoutingActivationResponse)
     {
-        printf("Routing Activation Response\n");
-        return 1;
+        RoutingActivationResponse activation_response = RoutingActivationRequestMessage::ParseActivationResponse(read_buffer, status);
+        if(activation_response == RoutingActivationResponse::SuccessfullActivation || activation_response == RoutingActivationResponse::ActivationPendingConfirmation)
+        {
+            printf("DOIP Connection Established\n");
+            return 0;
+        }
+        else
+        {
+            printf("Activation Failed: %d\n", (int)activation_response);
+            return 1;
+        }
     }
 
-    printf("nothing\n");
     return 0;
 }
