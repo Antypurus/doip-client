@@ -33,6 +33,13 @@
 #define DOIP_ROUTING_ACTIVATION_RESPONSE_CLIENT_ADDRESS_SIZE 2
 #define DOIP_ROUTING_ACTIVATION_RESPONSE_SERVER_ADDRESS_SIZE 2
 
+#define DOIP_DIAGNOSTIC_MESSAGE_BASE_PAYLOAD_SIZE 4
+#define DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_RELATIVE_OFFSET 0
+#define DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_RELATIVE_OFFSET 2
+#define DOIP_DIAGNOSTIC_MESSAGE_DATA_RELATIVE_OFFSET 4
+#define DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_SIZE 2
+#define DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_SIZE 2
+
 DOIPMessage::DOIPMessage(std::uint32_t payload_size, DOIPPayloadType payload_type, DOIPVersion protocol_version)
 {
     this->doip_message_length = DOIP_HEADER_SIZE + payload_size;
@@ -173,4 +180,25 @@ RoutingActivationResponse RoutingActivationRequestMessage::ParseActivationRespon
     if(response == 0xFF) return RoutingActivationResponse::Reserved;
 
     return (RoutingActivationResponse)response;
+}
+
+DoIPDiagnosticMessage::DoIPDiagnosticMessage(
+        std::uint16_t source_diagnostic_address,
+        std::uint16_t target_diagnostic_address,
+        const std::uint8_t* diagnostic_message,
+        std::uint32_t diagnostic_message_length)
+    :DOIPMessage(DOIP_DIAGNOSTIC_MESSAGE_BASE_PAYLOAD_SIZE + diagnostic_message_length, DOIPPayloadType::DiagnosticMessage)
+{
+    const std::uint16_t network_order_source_address = htons(source_diagnostic_address);
+    const std::uint16_t network_order_target_address = htons(target_diagnostic_address);
+
+    memcpy(this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_RELATIVE_OFFSET,
+            &network_order_source_address,
+            DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_SIZE);
+    memcpy(this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_RELATIVE_OFFSET,
+            &network_order_target_address,
+            DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_SIZE);
+    memcpy(this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_DATA_RELATIVE_OFFSET,
+            diagnostic_message,
+            diagnostic_message_length);
 }

@@ -83,3 +83,11 @@ public:
 
     static RoutingActivationResponse ParseActivationResponse(const std::uint8_t* data, std::uint32_t data_length);
 };
+
+class DoIPDiagnosticMessage: public DOIPMessage
+{
+public:
+    DoIPDiagnosticMessage() = default;
+    DoIPDiagnosticMessage(std::uint16_t source_diagnostic_address, std::uint16_t target_diagnostic_address, const std::uint8_t* diagnostic_message, std::uint32_t diagnostic_message_length);
+};
+

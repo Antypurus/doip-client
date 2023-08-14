@@ -65,7 +65,6 @@ int main()
         if(activation_response == RoutingActivationResponse::SuccessfullActivation || activation_response == RoutingActivationResponse::ActivationPendingConfirmation)
         {
             printf("DOIP Connection Established\n");
-            return 0;
         }
         else
         {
@@ -73,6 +72,20 @@ int main()
             return 1;
         }
     }
+
+    std::uint8_t read_data[3];
+    read_data[0] = 0x22;
+    read_data[1] = 0x32;
+    read_data[2] = 0x50;
+
+    DoIPDiagnosticMessage diag(0x32, 0x3301, read_data, 3);
+    send(socket_fd, diag.doip_message, diag.doip_message_length, 0);
+
+    status = read(socket_fd, read_buffer, 1024);
+    std::cout << status << std::endl;
+
+    status = read(socket_fd, read_buffer, 1024);
+    std::cout << status << std::endl;
 
     return 0;
 }
