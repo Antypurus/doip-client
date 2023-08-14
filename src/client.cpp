@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <cstring>
 #include <iostream>
 
@@ -36,11 +37,7 @@ int main()
         return 1;
     }
 
-    const unsigned short diagnostic_address = htons(0x0032);
-    DOIPMessage routing_activation_request(11, DOIPPayloadType::RoutingActivationRequest);
-    memcpy(&routing_activation_request[0], &diagnostic_address, sizeof(diagnostic_address));
-    routing_activation_request[2] = 0x00;
-
+    RoutingActivationRequestMessage routing_activation_request(0x32);
     status = send(socket_fd, routing_activation_request.doip_message, routing_activation_request.doip_message_length, 0);
     if(status != routing_activation_request.doip_message_length)
     {
@@ -48,5 +45,26 @@ int main()
         return 1;
     }
 
+    std::uint8_t read_buffer[1024];
+    status = read(socket_fd, read_buffer, 1024);
+    if(!DOIPMessage::IsValidDOIPMesasage(read_buffer, status))
+    {
+        printf("Invalid DOIP Message Received\n");
+        return 1;
+    }
+
+    DOIPPayloadType type = DOIPMessage::DetermineDOIPMessageType(read_buffer, status);
+    if(type == DOIPPayloadType::GenericNegativeAck)
+    {
+        printf("Negative ACK Code:%d\n", (int)DOIPMessage::GetNegativeAcknoledgement(read_buffer, status));
+        return 1;
+    }
+    else if(type == DOIPPayloadType::RoutingActivationResponse)
+    {
+        printf("Routing Activation Response\n");
+        return 1;
+    }
+
+    printf("nothing\n");
     return 0;
 }
