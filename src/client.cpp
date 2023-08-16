@@ -87,5 +87,7 @@ int main()
     status = read(socket_fd, read_buffer, 1024);
     std::cout << status << std::endl;
 
+    close(socket_fd);
+
     return 0;
 }

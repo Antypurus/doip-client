@@ -24,7 +24,7 @@ enum class DOIPPayloadType: std::uint16_t
     DiagnosticMessageNegativeResponse = 0x8003
 };
 
-enum class DOIPNegativeAckCode: std::uint8_t
+enum class DOIPRoutingActivationNegativeAck: std::uint8_t
 {
     None = 0xFF,
     IncorrectPattern = 0x00,
@@ -42,14 +42,15 @@ public:
 
 public:
     DOIPMessage() = default;
+    DOIPMessage(std::uint8_t* message, std::uint32_t message_length);
     DOIPMessage(std::uint32_t payload_size, DOIPPayloadType payload_type, DOIPVersion protocol_version = DOIPVersion::V3);
     ~DOIPMessage();
 
-    std::uint8_t& operator[](std::uint32_t index) const;
+    std::uint32_t GetPayloadLength() const;
 
     static bool IsValidDOIPMesasage(const std::uint8_t* data, std::uint32_t data_length);
     static DOIPPayloadType DetermineDOIPMessageType(const std::uint8_t* data, std::uint32_t data_length);
-    static DOIPNegativeAckCode GetNegativeAcknoledgement(const std::uint8_t* data, std::uint32_t data_length);
+    static DOIPRoutingActivationNegativeAck GetNegativeAcknoledgement(const std::uint8_t* data, std::uint32_t data_length);
 };
 
 enum class DOIPActivationType: std::uint8_t
@@ -88,6 +89,14 @@ class DoIPDiagnosticMessage: public DOIPMessage
 {
 public:
     DoIPDiagnosticMessage() = default;
+    DoIPDiagnosticMessage(std::uint8_t* doip_diagnostic_message, std::uint32_t message_length);
     DoIPDiagnosticMessage(std::uint16_t source_diagnostic_address, std::uint16_t target_diagnostic_address, const std::uint8_t* diagnostic_message, std::uint32_t diagnostic_message_length);
+
+    std::uint8_t& operator[](std::uint32_t index) const;
+    std::uint8_t* GetDiagnosticMessage() const;
+    std::uint32_t GetDiagnosticMessageLenght() const;
+    std::uint16_t GetSourceAddress() const;
+    std::uint16_t GetTargetAddress() const;
+
 };
 

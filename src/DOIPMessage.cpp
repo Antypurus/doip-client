@@ -55,6 +55,12 @@ DOIPMessage::DOIPMessage(std::uint32_t payload_size, DOIPPayloadType payload_typ
     memcpy(this->doip_message + DOIP_PAYLOAD_LENGTH_OFFSET, &network_order_payload_size, DOIP_HEADER_PAYLOAD_LENGTH_SIZE);
 }
 
+DOIPMessage::DOIPMessage(std::uint8_t* message, std::uint32_t message_length)
+{
+    this->doip_message = message;
+    this->doip_message_length = message_length;
+}
+
 DOIPMessage::~DOIPMessage()
 {
     if(this->doip_message != nullptr)
@@ -64,9 +70,9 @@ DOIPMessage::~DOIPMessage()
     }
 }
 
-std::uint8_t& DOIPMessage::operator[](std::uint32_t index) const
+std::uint32_t DOIPMessage::GetPayloadLength() const
 {
-    return this->doip_message[DOIP_HEADER_SIZE + index];
+    return this->doip_message[DOIP_PAYLOAD_LENGTH_OFFSET];
 }
 
 bool DOIPMessage::IsValidDOIPMesasage(const std::uint8_t* data, std::uint32_t data_length)
@@ -144,17 +150,17 @@ DOIPPayloadType DOIPMessage::DetermineDOIPMessageType(const std::uint8_t* data, 
     }
 }
 
-DOIPNegativeAckCode DOIPMessage::GetNegativeAcknoledgement(const std::uint8_t* data, std::uint32_t data_length)
+DOIPRoutingActivationNegativeAck DOIPMessage::GetNegativeAcknoledgement(const std::uint8_t* data, std::uint32_t data_length)
 {
-    if(data_length != (DOIP_HEADER_SIZE + DOIP_NACK_PAYLOAD_SIZE)) return DOIPNegativeAckCode::None;
+    if(data_length != (DOIP_HEADER_SIZE + DOIP_NACK_PAYLOAD_SIZE)) return DOIPRoutingActivationNegativeAck::None;
 
     const std::uint8_t negatic_ack_code = data[DOIP_NACK_CODE_OFFSET];
     if(negatic_ack_code >= 0x00 && negatic_ack_code <= 0x04)
     {
-        return (DOIPNegativeAckCode)negatic_ack_code;
+        return (DOIPRoutingActivationNegativeAck)negatic_ack_code;
     }
 
-    return DOIPNegativeAckCode::None;
+    return DOIPRoutingActivationNegativeAck::None;
 }
 
 RoutingActivationRequestMessage::RoutingActivationRequestMessage(std::uint16_t diagnostic_address, DOIPActivationType activation_type)
@@ -202,3 +208,42 @@ DoIPDiagnosticMessage::DoIPDiagnosticMessage(
             diagnostic_message,
             diagnostic_message_length);
 }
+
+DoIPDiagnosticMessage::DoIPDiagnosticMessage(
+        std::uint8_t* doip_diagnostic_message,
+        std::uint32_t message_length)
+    :DOIPMessage(doip_diagnostic_message, message_length) { }
+
+std::uint8_t& DoIPDiagnosticMessage::operator[](std::uint32_t index) const
+{
+    return this->doip_message[DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_DATA_RELATIVE_OFFSET + index];
+}
+
+std::uint8_t* DoIPDiagnosticMessage::GetDiagnosticMessage() const
+{
+    return this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_DATA_RELATIVE_OFFSET;
+}
+
+std::uint32_t DoIPDiagnosticMessage::GetDiagnosticMessageLenght() const
+{
+    return this->GetPayloadLength() - DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_SIZE - DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_SIZE;
+}
+
+std::uint16_t DoIPDiagnosticMessage::GetSourceAddress() const
+{
+    std::uint16_t source_address;
+    memcpy(&source_address,
+            this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_RELATIVE_OFFSET,
+            DOIP_DIAGNOSTIC_MESSAGE_SOURCE_ADDRESS_SIZE);
+    return ntohs(source_address);
+}
+
+std::uint16_t DoIPDiagnosticMessage::GetTargetAddress() const
+{
+    std::uint16_t target_address;
+    memcpy(&target_address,
+            this->doip_message + DOIP_HEADER_SIZE + DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_RELATIVE_OFFSET,
+            DOIP_DIAGNOSTIC_MESSAGE_TARGET_ADDRESS_SIZE);
+    return ntohs(target_address);
+}
+
